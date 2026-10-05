@@ -1,0 +1,21 @@
+{
+  "name": "gtfs-trip-planner-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application-based benchmarking of Redis and MongoDB for trip planning using GTFS data.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "ingest": "node src/ingest.js",
+    "benchmark": "node src/benchmark.js",
+    "check": "node src/check.js",
+    "report": "node src/report.js"
+  },
+  "dependencies": {
+    "csv-parse": "^6.1.0",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "ioredis": "^5.8.2",
+    "mongodb": "^7.3.0"
+  }
+}

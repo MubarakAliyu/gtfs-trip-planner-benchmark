@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GTFS Trip Planner Benchmark</title>
+  <style>
+    :root { font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif; color: #18212b; background: #f5f7fa; }
+    body { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+    .hero, .card { background: #fff; border: 1px solid #e4e9ef; border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(18, 35, 52, .06); }
+    h1 { margin: 0 0 8px; } h2 { margin-top: 0; font-size: 20px; }
+    .muted { color: #617083; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 16px; }
+    label { display:block; font-weight: 650; margin-bottom: 6px; }
+    input, select, button { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #cfd8e3; box-sizing: border-box; }
+    button { cursor:pointer; font-weight: 700; background:#18212b; color:#fff; }
+    .query-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .query-actions button { flex:1; min-width:180px; }
+    pre { white-space: pre-wrap; background:#111827; color:#e5e7eb; padding:16px; border-radius:12px; overflow:auto; }
+    .pill { display:inline-block; padding:6px 10px; border-radius:999px; background:#eef3f8; margin-right:6px; }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <h1>GTFS Trip Planner Benchmark</h1>
+    <p class="muted">Application-based comparison of MongoDB and Redis using GTFS schedule data.</p>
+    <span class="pill">MongoDB</span><span class="pill">Redis</span><span class="pill">GTFS</span>
+  </section>
+
+  <section class="card">
+    <h2>1. Direct Trip Search</h2>
+    <div class="grid">
+      <div><label>Origin stop</label><input id="from" value="airport" /></div>
+      <div><label>Destination stop</label><input id="to" value="center" /></div>
+      <div><label>Result limit</label><input id="limit" type="number" value="10" min="1" /></div>
+    </div>
+    <br /><button onclick="runDirectTrips()">Compare MongoDB vs Redis</button>
+  </section>
+
+  <section class="card">
+    <h2>2. Next Departures</h2>
+    <div class="grid">
+      <div><label>Stop</label><input id="depStop" value="airport" /></div>
+      <div><label>After time (GTFS seconds)</label><input id="after" type="number" value="46800" /></div>
+      <div><label>Result limit</label><input id="depLimit" type="number" value="10" min="1" /></div>
+    </div>
+    <br /><button onclick="runDepartures()">Compare Departure Queries</button>
+  </section>
+
+  <section class="card">
+    <h2>3. Routes Serving a Stop</h2>
+    <div class="grid">
+      <div><label>Stop</label><input id="routeStop" value="airport" /></div>
+      <div><label>Result limit</label><input id="routeLimit" type="number" value="10" min="1" /></div>
+    </div>
+    <br /><button onclick="runRoutes()">Compare Route Queries</button>
+  </section>
+
+  <section class="card">
+    <h2>Output</h2>
+    <pre id="output">Choose a query above.</pre>
+  </section>
+
+<script>
+  async function getBoth(type, params) {
+    const query = new URLSearchParams({ type, ...params });
+    const [mongo, redis] = await Promise.all([
+      fetch('/api/query/mongodb?' + query).then(r => r.json()),
+      fetch('/api/query/redis?' + query).then(r => r.json()),
+    ]);
+    document.getElementById('output').textContent = JSON.stringify({ mongo, redis }, null, 2);
+  }
+  async function runDirectTrips() {
+    document.getElementById('output').textContent = 'Loading...';
+    try { await getBoth('directTrips', { from: document.getElementById('from').value, to: document.getElementById('to').value, limit: document.getElementById('limit').value }); }
+    catch (e) { document.getElementById('output').textContent = e.message; }
+  }
+  async function runDepartures() {
+    document.getElementById('output').textContent = 'Loading...';
+    try { await getBoth('departures', { stop: document.getElementById('depStop').value, after: document.getElementById('after').value, limit: document.getElementById('depLimit').value }); }
+    catch (e) { document.getElementById('output').textContent = e.message; }
+  }
+  async function runRoutes() {
+    document.getElementById('output').textContent = 'Loading...';
+    try { await getBoth('routesByStop', { stop: document.getElementById('routeStop').value, limit: document.getElementById('routeLimit').value }); }
+    catch (e) { document.getElementById('output').textContent = e.message; }
+  }
+</script>
+</body>
+</html>
